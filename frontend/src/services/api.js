@@ -1,43 +1,45 @@
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/constants';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000, // 30 секунд
+  baseURL: 'http://127.0.0.1:8000/api',
+  timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 });
 
-// Интерцептор для добавления токена
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('tk_creds')
-      ? JSON.parse(localStorage.getItem('tk_creds')).session_id
-      : null;
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
+// Именованный экспорт apiService
+export const apiService = {
+  // Авторизация и получение списка машин
+  initData: async (credentials) => {
+    const res = await api.post('/init-data/', credentials);
+    return res.data;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
-// Интерцептор для обработки ошибок
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Очищаем localStorage при 401 ошибке
-      localStorage.removeItem('tk_creds');
-      window.location.reload();
-    }
-    return Promise.reject(error);
+  // Получение точек для графиков
+  getAnalytics: async (params) => {
+    const res = await api.get('/analytics/', { params });
+    // Проверка структуры ответа бэкенда
+    return res.data.track || res.data.points || res.data || [];
+  },
+
+  // Получение сводных отчетов
+  getReports: async (params) => {
+    const res = await api.get('/reports/', { params });
+    return res.data || [];
+  },
+
+  // Получение онлайн данных
+  getOnlineData: async (sessionId, schemaId, deviceIds) => {
+    const res = await api.get('/vehicles/online/', {
+      params: {
+        session_id: sessionId,
+        schema_id: schemaId,
+        device_ids: deviceIds
+      }
+    });
+    return res.data || {};
   }
-);
+};
 
 export default api;

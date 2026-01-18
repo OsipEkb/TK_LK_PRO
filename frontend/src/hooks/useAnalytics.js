@@ -1,77 +1,56 @@
 import { useState, useCallback } from 'react';
-import { analyticsService } from '../services/analytics';
+import { apiService } from '../services/api';
 
-export const useAnalytics = () => {
-  const [chartData, setChartData] = useState([]);
+export const useAnalytics = (sessionId, schemaId) => {
+  const [data, setData] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchTrackData = useCallback(async (sessionId, schemaId, deviceId, dateFrom, dateTo) => {
-    if (!sessionId || !schemaId || !deviceId || !dateFrom || !dateTo) {
-      setError('Missing required parameters');
-      return;
-    }
+  const fetchAnalytics = useCallback(async (vehicleIds, dateRange) => {
+    if (!sessionId || !schemaId || !vehicleIds.length) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const data = await analyticsService.getTrackData(
-        sessionId,
-        schemaId,
-        deviceId,
-        dateFrom,
-        dateTo
-      );
+      const dataPromises = vehicleIds.map(async (vehicleId) => {
+        const response = await apiService.getAnalytics({
+          session: sessionId,
+          schema_id: schemaId,
+          device_id: vehicleId,
+          from: dateRange.from,
+          to: dateRange.to
+        });
+        return { vehicleId, data: response };
+      });
 
-      if (data.success) {
-        setChartData(data.points || []);
-      } else {
-        setError(data.error || 'Failed to fetch track data');
-      }
+      const results = await Promise.all(dataPromises);
+      const dataMap = {};
+      results.forEach(result => {
+        dataMap[result.vehicleId] = result.data;
+      });
+
+      setData(dataMap);
+      return dataMap;
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Ошибка загрузки данных');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchAnalyticsData = useCallback(async (sessionId, schemaId, deviceId, dateFrom, dateTo) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await analyticsService.getAnalyticsData(
-        sessionId,
-        schemaId,
-        deviceId,
-        dateFrom,
-        dateTo
-      );
-
-      if (data.points) {
-        setChartData(data.points);
-      } else {
-        setChartData([]);
-      }
-    } catch (err) {
+      console.error('Analytics fetch error:', err);
       setError(err.message);
+      throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sessionId, schemaId]);
 
-  const clearChartData = useCallback(() => {
-    setChartData([]);
+  const clearData = useCallback(() => {
+    setData({});
     setError(null);
   }, []);
 
   return {
-    chartData,
+    data,
     loading,
     error,
-    fetchTrackData,
-    fetchAnalyticsData,
-    clearChartData
+    fetchAnalytics,
+    clearData
   };
 };

@@ -1,131 +1,63 @@
 import React from 'react';
-import { MapPin, Clock, Activity, Fuel } from 'lucide-react';
+import { MapPin, Fuel, Clock, Zap } from 'lucide-react';
 
-const VehicleCard = ({
-  vehicle,
-  onlineData,
-  props,
-  theme,
-  onClick,
-  borderRadius
-}) => {
-  const vId = String(vehicle.ID);
-  const online = onlineData[vId] || {};
-  const vehicleProps = props[vId] || {};
-
-  const getDataStatus = (lastData) => {
-    if (!lastData) return { label: 'НЕТ СВЯЗИ С ТЕРМИНАЛОМ', color: '#6b7280' };
-    const diff = (new Date() - new Date(lastData)) / 1000 / 60;
-    if (diff <= 10) return { label: 'ДАННЫЕ АКТУАЛЬНЫЕ', color: '#22c55e' };
-    if (diff <= 60) return { label: 'ЗАДЕРЖКА ДАННЫХ', color: '#eab308' };
-    return { label: 'ДАННЫЕ УСТАРЕВШИЕ', color: '#ef4444' };
+const VehicleCard = ({ vehicle, online = {}, theme }) => {
+  // Расчет статуса на основе DT из твоего API
+  const getStatus = (dt) => {
+    if (!dt) return { label: 'НЕТ ДАННЫХ', color: '#6b7280' };
+    const diff = (new Date() - new Date(dt)) / 1000 / 60;
+    if (diff <= 15) return { label: 'ОНЛАЙН', color: '#22c55e' };
+    return { label: 'ОФФЛАЙН', color: '#ef4444' };
   };
 
-  const statusInfo = getDataStatus(online.LastData || online.DT);
-  const perc = vehicleProps.MaxFuel > 0
-    ? Math.round((online.Fuel / vehicleProps.MaxFuel) * 100)
-    : 0;
+  const status = getStatus(online.DT);
+  const fuelPerc = vehicle.max_fuel > 0 ? Math.min(100, Math.round((online.fuel / vehicle.max_fuel) * 100)) : 0;
 
   return (
-    <div
-      onClick={() => onClick(vehicle.ID)}
-      className="p-6 border flex flex-col justify-between h-[450px] relative transition-all shadow-xl group cursor-pointer hover:scale-[1.01]"
-      style={{
-        backgroundColor: theme.card,
-        borderRadius: `${borderRadius}px`,
-        borderColor: theme.border
-      }}
-    >
-      {/* Индикатор статуса */}
-      <div className="absolute top-6 right-6 flex items-center gap-2">
-        <div
-          className="w-2.5 h-2.5 rounded-full"
-          style={{
-            backgroundColor: statusInfo.color,
-            boxShadow: `0 0 15px ${statusInfo.color}`
-          }}
-        />
-      </div>
+    <div className="p-6 border flex flex-col justify-between h-[420px] relative transition-all shadow-xl group"
+         style={{ backgroundColor: theme.card, borderRadius: '24px', borderColor: theme.border }}>
 
-      {/* Заголовок */}
       <div className="flex justify-between items-start">
-        <div className="w-2/3">
-          <h3 className="text-lg font-black uppercase tracking-tighter leading-none truncate">
-            {vehicle.Name}
-          </h3>
-          <div className="text-[10px] font-bold opacity-40 uppercase mt-2">
-            {vehicleProps.RegNumber || '—'}
-          </div>
+        <div>
+          <h3 className="text-lg font-black uppercase tracking-tighter text-white">{vehicle.Name}</h3>
+          <div className="text-[10px] font-bold opacity-40 uppercase text-white">{vehicle.reg_number}</div>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-black italic" style={{ color: theme.accent }}>
-            {Math.round(online.Speed || 0)}
-          </div>
-          <div className="text-[9px] font-black opacity-40 uppercase">КМ/Ч</div>
+          <div className="text-3xl font-black italic" style={{ color: theme.accent }}>{Math.round(online.Speed || 0)}</div>
+          <div className="text-[9px] font-black opacity-40 uppercase text-white">КМ/Ч</div>
         </div>
       </div>
 
-      {/* Адрес */}
-      <div className="bg-black/20 p-4 rounded-2xl border border-white/5 flex gap-3 items-start my-2">
+      <div className="bg-black/20 p-4 rounded-2xl border border-white/5 flex gap-3 items-start my-4">
         <MapPin size={16} className="shrink-0 mt-0.5" style={{ color: theme.accent }} />
-        <p className="text-[11px] leading-tight opacity-70 line-clamp-2 min-h-[32px]">
-          {online.Address || 'Координаты не определены'}
-        </p>
+        <p className="text-[11px] leading-tight opacity-70 text-white line-clamp-2">{online.Address}</p>
       </div>
 
-      {/* Статусы */}
-      <div className="grid grid-cols-2 gap-2">
-        {online.Moto > 0 && (
-          <div className="bg-white/5 p-4 rounded-2xl border border-white/5 relative overflow-hidden">
-            <span className="text-[8px] font-black opacity-30 uppercase block mb-1 flex items-center gap-1">
-              <Clock size={10} /> Мото
-            </span>
-            <div className="font-black italic text-xl">{online.Moto}</div>
-          </div>
-        )}
-        <div className={`bg-white/5 p-4 rounded-2xl border border-white/5 ${online.Moto > 0 ? '' : 'col-span-2'}`}>
-          <span className="text-[8px] font-black opacity-30 uppercase block mb-1 flex items-center gap-1">
-            <Activity size={10} /> Статус связи
-          </span>
-          <div className="font-black text-[10px] mt-1 uppercase" style={{ color: statusInfo.color }}>
-            {statusInfo.label}
-          </div>
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+          <span className="text-[8px] font-black opacity-30 uppercase block mb-1">Моточасы</span>
+          <div className="font-black text-white">{online.moto_hours || 0} ч</div>
+        </div>
+        <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+          <span className="text-[8px] font-black opacity-30 uppercase block mb-1">Статус</span>
+          <div className="font-black text-[10px]" style={{ color: status.color }}>{status.label}</div>
         </div>
       </div>
 
-      {/* Топливо */}
-      <div
-        className="p-6 rounded-[32px] text-black shadow-inner mt-4 relative overflow-hidden transition-transform group-hover:scale-[1.02]"
-        style={{ backgroundColor: theme.accent }}
-      >
+      <div className="p-5 rounded-[24px] text-black shadow-inner relative overflow-hidden"
+           style={{ backgroundColor: theme.accent }}>
         <div className="flex justify-between items-end mb-1 relative z-10">
-          <span className="uppercase text-[9px] font-black flex items-center gap-1">
-            <Fuel size={12} /> Топливо {perc}%
-          </span>
-          <span className="text-2xl font-black italic">
-            {Math.round(online.Fuel || 0)} Л
-          </span>
+          <span className="uppercase text-[9px] font-black flex items-center gap-1"><Fuel size={12}/> Топливо {fuelPerc}%</span>
+          <span className="text-xl font-black italic">{Math.round(online.fuel || 0)} Л</span>
         </div>
-        <div className="w-full h-1.5 bg-black/10 rounded-full mt-3 overflow-hidden relative z-10">
-          <div
-            className="h-full bg-black/80 transition-all duration-1000"
-            style={{ width: `${perc}%` }}
-          />
+        <div className="w-full h-1.5 bg-black/10 rounded-full mt-2 overflow-hidden relative z-10">
+          <div className="h-full bg-black/80 transition-all duration-1000" style={{ width: `${fuelPerc}%` }} />
         </div>
       </div>
 
-      {/* Зажигание */}
-      <div className={`mt-4 text-[10px] font-black uppercase flex items-center gap-2 px-2 ${
-        online.Ignition ? 'opacity-100' : 'opacity-20'
-      }`}>
-        <div className={`w-2 h-2 rounded-full ${
-          online.Ignition ? 'animate-pulse' : ''
-        }`} style={{backgroundColor: online.Ignition ? '#22c55e' : 'currentColor'}} />
-        {online.Ignition ? (
-          <span className="text-green-500">Зажигание ВКЛ</span>
-        ) : (
-          'Зажигание выкл'
-        )}
+      <div className={`mt-4 text-[9px] font-black uppercase flex items-center gap-2 ${online.ignition ? 'text-green-500' : 'opacity-20 text-white'}`}>
+        <Zap size={12} fill={online.ignition ? "currentColor" : "none"} />
+        {online.ignition ? 'Зажигание включено' : 'Зажигание выключено'}
       </div>
     </div>
   );

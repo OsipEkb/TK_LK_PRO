@@ -4,7 +4,78 @@
 
 @layer base {
   body {
-    @apply font-sans;
+    @apply font-sans antialiased;
+    background-color: #050505;
+    color: white;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Стили для react-grid-layout */
+  .react-grid-layout {
+    position: relative;
+    transition: height 200ms ease;
+  }
+
+  .react-grid-item {
+    transition: all 200ms ease;
+    transition-property: left, top;
+  }
+
+  .react-grid-item.cssTransforms {
+    transition-property: transform;
+  }
+
+  .react-grid-item.resizing {
+    z-index: 1;
+    will-change: width, height;
+  }
+
+  .react-grid-item.react-draggable-dragging {
+    transition: none;
+    z-index: 3;
+    will-change: transform;
+  }
+
+  .react-grid-item.react-grid-placeholder {
+    background: rgba(255, 184, 0, 0.1);
+    border: 2px dashed rgba(255, 184, 0, 0.3);
+    border-radius: 24px;
+    opacity: 0.5;
+    transition-duration: 100ms;
+    z-index: 2;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+  }
+
+  .react-grid-item > .react-resizable-handle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    bottom: 0;
+    right: 0;
+    cursor: se-resize;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .react-grid-item:hover > .react-resizable-handle {
+    opacity: 0.5;
+  }
+
+  .react-grid-item > .react-resizable-handle::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 5px;
+    height: 5px;
+    border-right: 2px solid rgba(255, 184, 0, 0.5);
+    border-bottom: 2px solid rgba(255, 184, 0, 0.5);
   }
 }
 
@@ -14,5 +85,87 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 184, 0, 0.3);
+    border-radius: 10px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 184, 0, 0.5);
+  }
+
+  /* Анимации */
+  .animate-in {
+    animation-duration: 500ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fadeIn;
+  }
+
+  .slide-in-from-top-4 {
+    animation-name: slideInFromTop4;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromTop4 {
+    from {
+      opacity: 0;
+      transform: translateY(-16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Highcharts переопределения */
+  .highcharts-background {
+    fill: transparent !important;
+  }
+
+  .highcharts-root {
+    font-family: inherit !important;
+    font-weight: 900 !important;
+  }
+
+  .highcharts-axis-labels text {
+    fill: rgba(255, 255, 255, 0.4) !important;
+    font-size: 9px !important;
+    font-weight: 900 !important;
+  }
+
+  .highcharts-grid-line {
+    stroke: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .highcharts-tooltip {
+    filter: none !important;
   }
 }
